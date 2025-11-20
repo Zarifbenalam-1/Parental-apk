@@ -1,0 +1,15 @@
+# Gradle files
+.gradle/
+build/
+
+# Local configuration file (sdk.dir, etc.)
+local.properties
+
+# Android Studio files
+.idea/
+*.iml
+.DS_Store
+
+# App specific
+app/build/
+app/google-services.json
