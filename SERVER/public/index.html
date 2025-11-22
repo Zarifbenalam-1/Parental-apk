@@ -3,49 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROJECT RAVEN | C2</title>
+    <title>DeviceManager Pro</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>PROJECT RAVEN <span class="status offline" id="connectionStatus">[OFFLINE]</span></h1>
-            <div class="clock" id="clock">00:00:00</div>
-        </header>
-
-        <main>
-            <div class="panel video-panel">
-                <h2>// SURVEILLANCE FEED</h2>
-                <div id="remoteVideoContainer">
-                    <video id="remoteVideo" autoplay playsinline></video>
-                    <div class="overlay">WAITING FOR SIGNAL...</div>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-layer-group"></i> DeviceManager
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-view="dashboard"><i class="fa-solid fa-grid-2"></i> Dashboard</a>
+                <a href="#" class="nav-item" data-view="devices"><i class="fa-solid fa-laptop-mobile"></i> Devices</a>
+                <a href="#" class="nav-item" data-view="streams"><i class="fa-solid fa-video"></i> Live Streams</a>
+                <a href="#" class="nav-item" data-view="alerts"><i class="fa-solid fa-bell"></i> Alerts</a>
+                <a href="#" class="nav-item" data-view="settings"><i class="fa-solid fa-gear"></i> Settings</a>
+            </nav>
+            <div class="user-profile">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="user-info">
+                    <span id="current-user">Admin</span>
+                    <small>Lab Mode</small>
                 </div>
-                <div class="controls">
-                    <button id="btn-start-stream" class="btn danger">INITIATE STREAM</button>
-                    <button id="btn-stop-stream" class="btn">TERMINATE</button>
+                <button id="logout-btn"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search devices, streams, logs...">
+                </div>
+                <div class="top-actions">
+                    <button class="btn btn-primary" id="btn-demo-stream"><i class="fa-solid fa-play"></i> Start Demo Stream</button>
+                    <div class="system-status">
+                        <span id="connection-status" class="badge badge-danger">Disconnected</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- VIEW: DASHBOARD -->
+            <div id="view-dashboard" class="view-section active">
+                <div class="page-header">
+                    <h2>Dashboard</h2>
+                    <button class="btn btn-secondary"><i class="fa-solid fa-users"></i> Bulk Enroll</button>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-mobile-screen"></i> Total Devices</div>
+                        <div class="stat-value" id="stat-total-devices">0</div>
+                        <div class="stat-trend trend-up">+5%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-wifi"></i> Online Now</div>
+                        <div class="stat-value" id="stat-online-devices">0</div>
+                        <div class="stat-trend trend-down">-2%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-video"></i> Active Streams</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-trend trend-up">+10%</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label"><i class="fa-solid fa-triangle-exclamation"></i> Recent Alerts</div>
+                        <div class="stat-value">3</div>
+                        <div class="stat-trend">In last 24h</div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="grid-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Activity (Last 24h)</h3>
+                        </div>
+                        <div style="padding: 2rem; text-align: center; color: #9ca3af;">
+                            <i class="fa-solid fa-chart-column" style="font-size: 4rem; opacity: 0.2;"></i>
+                            <p style="margin-top: 1rem;">Activity Chart Placeholder</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Recent Alerts</h3>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <div class="alert-item" style="border:none; padding:0.5rem 0;">
+                                <div class="alert-icon danger"><i class="fa-solid fa-circle-exclamation"></i></div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Device Unresponsive</div>
+                                    <div class="alert-time">2 minutes ago</div>
+                                </div>
+                            </div>
+                            <div class="alert-item" style="border:none; padding:0.5rem 0;">
+                                <div class="alert-icon warning"><i class="fa-solid fa-battery-quarter"></i></div>
+                                <div class="alert-content">
+                                    <div class="alert-title">Low Battery (15%)</div>
+                                    <div class="alert-time">15 minutes ago</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 1rem; border-top: 1px solid #e5e7eb; text-align: center;">
+                            <button class="btn btn-secondary" style="width: 100%;">View All Alerts</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="panel log-panel">
-                <h2>// INTELLIGENCE LOGS</h2>
-                <div class="tabs">
-                    <button class="tab active" data-type="location">LOCATION</button>
-                    <button class="tab" data-type="notifications">NOTIFICATIONS</button>
-                    <button class="tab" data-type="system">SYSTEM</button>
+            <!-- VIEW: DEVICES -->
+            <div id="view-devices" class="view-section">
+                <div class="page-header">
+                    <h2>Devices</h2>
+                    <button id="refresh-devices" class="btn btn-secondary"><i class="fa-solid fa-rotate"></i> Refresh</button>
                 </div>
-                <div id="log-output" class="terminal-window">
-                    <div class="log-entry">System initialized... waiting for data.</div>
+                <div class="card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Device ID</th>
+                                <th>Last Seen</th>
+                                <th>Battery</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="device-list">
+                            <!-- Device rows go here -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
+
+            <!-- VIEW: STREAMS -->
+            <div id="view-streams" class="view-section">
+                <div class="page-header">
+                    <h2>Live Streams</h2>
+                </div>
+                <div class="card video-card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-eye"></i> Surveillance Feed</h3>
+                        <div class="video-controls">
+                            <button id="btn-start-stream" class="btn btn-sm btn-primary">Start</button>
+                            <button id="btn-stop-stream" class="btn btn-sm btn-secondary">Stop</button>
+                        </div>
+                    </div>
+                    <div class="video-wrapper">
+                        <video id="remoteVideo" autoplay playsinline></video>
+                        <div class="video-overlay">
+                            <i class="fa-solid fa-video-slash" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                            <p>Waiting for signal...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: ALERTS -->
+            <div id="view-alerts" class="view-section">
+                <div class="page-header">
+                    <h2>Alerts</h2>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-secondary">Filter</button>
+                        <button class="btn btn-primary">Acknowledge All</button>
+                    </div>
+                </div>
+                
+                <div class="alert-item">
+                    <div class="alert-icon danger"><i class="fa-solid fa-shield-halved"></i></div>
+                    <div class="alert-content">
+                        <div class="alert-title">Unauthorized Operation Attempted</div>
+                        <div class="alert-desc">An unauthorized command 'sudo rm -rf /' was attempted on device Edge-Device-001.</div>
+                        <div class="alert-time">2 minutes ago</div>
+                    </div>
+                    <button class="btn btn-sm btn-secondary">Acknowledge</button>
+                </div>
+
+                <div class="alert-item">
+                    <div class="alert-icon warning"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="alert-content">
+                        <div class="alert-title">High Battery Drain Detected</div>
+                        <div class="alert-desc">Device Sensor-Grid-Alpha is experiencing unusual battery drain (25%/hour).</div>
+                        <div class="alert-time">15 minutes ago</div>
+                    </div>
+                    <button class="btn btn-sm btn-secondary">Acknowledge</button>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div id="view-settings" class="view-section">
+                <div class="page-header">
+                    <h2>Settings</h2>
+                </div>
+                <div class="grid-container">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Change Password</h3>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <form id="change-password-form">
+                                <div class="form-group">
+                                    <label>New Password</label>
+                                    <input type="password" id="new-password" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Password</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Create New User</h3>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <form id="create-user-form">
+                                <div class="form-group">
+                                    <label>Username</label>
+                                    <input type="text" id="new-username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Password</label>
+                                    <input type="password" id="new-user-password" required>
+                                </div>
+                                <button type="submit" class="btn btn-success">Create User</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
-
-        <footer>
-            <div class="command-line">
-                <span class="prompt">admin@raven:~$</span>
-                <input type="text" id="cmd-input" placeholder="Enter command (e.g., GET_LOCATION, KILL_SWITCH)..." autocomplete="off">
-            </div>
-        </footer>
     </div>
 
     <script src="js/dashboard.js"></script>

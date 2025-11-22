@@ -14,3 +14,4 @@ local.properties
 app/build/
 app/google-services.json
 .env
+node_modules/

