@@ -1,0 +1,12 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+    ===========================================
+    PROJECT RAVEN C2 SERVER
+    Status: ONLINE
+    Port: 3000
+    Dashboard: http://localhost:3000/admin
+    ===========================================
+    
+[SOCKET] New Connection: WPtOjRwQK7dw-7kDAAAB
+[SOCKET] WPtOjRwQK7dw-7kDAAAB identified as admin
+[ADMIN COMMAND] START_STREAM

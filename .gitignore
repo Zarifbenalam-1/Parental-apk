@@ -13,3 +13,4 @@ local.properties
 # App specific
 app/build/
 app/google-services.json
+.env

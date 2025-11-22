@@ -1,0 +1,12 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+[FCM] WARNING: firebase-key.json not found. Push notifications will be SIMULATED.
+
+    ===========================================
+    PROJECT RAVEN C2 SERVER
+    Status: ONLINE
+    Port: 3000
+    Dashboard: http://localhost:3000/admin
+    ===========================================
+    
+[ADMIN COMMAND] START_STREAM
+[FCM SIMULATION] Would send command: START_STREAM to topic 'all_devices'

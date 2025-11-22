@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "985648556774",
+    "project_id": "dataflow-digital",
+    "storage_bucket": "dataflow-digital.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:985648556774:android:ffff8bf85ce363e24ba927",
+        "android_client_info": {
+          "package_name": "com.android.sys.battery.manager"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAURlnZklwN7IqLek8bXRCvprVtuonu0OE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

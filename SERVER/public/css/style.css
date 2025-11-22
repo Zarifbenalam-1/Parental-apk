@@ -1,0 +1,194 @@
+:root {
+    --bg-color: #0a0a0a;
+    --panel-bg: #111;
+    --text-color: #0f0;
+    --dim-text: #005500;
+    --accent: #0f0;
+    --danger: #f00;
+    --font-mono: 'Courier New', Courier, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: var(--font-mono);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 1rem;
+    gap: 1rem;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--dim-text);
+    padding-bottom: 0.5rem;
+}
+
+h1 {
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+}
+
+.status {
+    font-size: 0.8rem;
+    padding: 2px 6px;
+    border-radius: 2px;
+}
+
+.status.offline { color: var(--danger); border: 1px solid var(--danger); }
+.status.online { color: var(--accent); border: 1px solid var(--accent); }
+
+main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    flex: 1;
+    min-height: 0; /* Fix for nested scrolling */
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--dim-text);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+h2 {
+    font-size: 1rem;
+    color: var(--dim-text);
+    border-bottom: 1px solid var(--dim-text);
+    padding-bottom: 0.25rem;
+}
+
+/* Video Panel */
+#remoteVideoContainer {
+    flex: 1;
+    background: #000;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--dim-text);
+}
+
+video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.overlay {
+    position: absolute;
+    color: var(--dim-text);
+    animation: blink 2s infinite;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 0.5rem 1rem;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    flex: 1;
+}
+
+.btn:hover {
+    background: var(--dim-text);
+}
+
+.btn.danger {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* Log Panel */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.tab {
+    background: transparent;
+    border: none;
+    color: var(--dim-text);
+    cursor: pointer;
+    padding: 0.25rem;
+    font-family: var(--font-mono);
+}
+
+.tab.active {
+    color: var(--accent);
+    border-bottom: 1px solid var(--accent);
+}
+
+.terminal-window {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.9rem;
+    padding: 0.5rem;
+    background: #000;
+    border: 1px solid var(--dim-text);
+}
+
+.log-entry {
+    margin-bottom: 0.25rem;
+    word-break: break-all;
+}
+
+.log-entry .timestamp {
+    color: var(--dim-text);
+    margin-right: 0.5rem;
+}
+
+/* Footer */
+.command-line {
+    display: flex;
+    align-items: center;
+    background: var(--panel-bg);
+    border: 1px solid var(--dim-text);
+    padding: 0.5rem;
+}
+
+.prompt {
+    color: var(--accent);
+    margin-right: 0.5rem;
+}
+
+#cmd-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-family: var(--font-mono);
+    outline: none;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+}

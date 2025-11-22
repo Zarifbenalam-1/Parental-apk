@@ -1,0 +1,20 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+    ===========================================
+    PROJECT RAVEN C2 SERVER
+    Status: ONLINE
+    Port: 3000
+    Dashboard: http://localhost:3000/admin
+    ===========================================
+    
+[DATA RECEIVED] Type: location
+[SOCKET] New Connection: _yTYwcHYgeeKk1B1AAAB
+[SOCKET] Disconnected: _yTYwcHYgeeKk1B1AAAB
+[SOCKET] New Connection: nji21LENmeX-Ej-oAAAD
+[SOCKET] Disconnected: nji21LENmeX-Ej-oAAAD
+[SOCKET] New Connection: Og6Y46c07tViev5iAAAF
+[SOCKET] Disconnected: Og6Y46c07tViev5iAAAF
+[SOCKET] New Connection: _fOv1WQHPf2jdL5qAAAH
+[SOCKET] Disconnected: _fOv1WQHPf2jdL5qAAAH
+[DATA RECEIVED] Type: location
+[DATA RECEIVED] Type: location

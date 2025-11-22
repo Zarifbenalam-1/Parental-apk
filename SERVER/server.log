@@ -1,0 +1,10 @@
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+    ===========================================
+    PROJECT RAVEN C2 SERVER
+    Status: ONLINE
+    Port: 3000
+    Dashboard: http://localhost:3000/admin
+    ===========================================
+    
+[DATA RECEIVED] Type: location
