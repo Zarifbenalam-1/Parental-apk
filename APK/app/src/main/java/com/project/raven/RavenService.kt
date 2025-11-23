@@ -307,19 +307,6 @@ class RavenService : Service() {
             }
         }
     }
-                return@launch
-            }
-
-            // 3. Create Offer & Send to Server
-            // The manager will handle the async creation and callback
-            rtcManager?.createOffer { sdp ->
-                val json = JSONObject()
-                json.put("type", "webrtc_offer")
-                json.put("sdp", sdp.description)
-                uploadData(json.toString())
-            }
-        }
-    }
 
     private fun stopStreamingSession() {
         Log.d("Raven", "Stopping Stream...")
